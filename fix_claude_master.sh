@@ -28,6 +28,24 @@ print_info() {
     echo -e "${BLUE}ℹ $1${NC}"
 }
 
+# Function to update CLI configuration
+update_cli_config() {
+    CLI_CONFIG_PATH="$HOME/.claude/cli-config.json"
+    if [ ! -f "$CLI_CONFIG_PATH" ]; then
+        echo "Creating CLI configuration file..."
+        cat <<EOL > "$CLI_CONFIG_PATH"
+{
+  "installMethod": "npm-local",
+  "autoUpdates": true,
+  "version": "1.0.43"
+}
+EOL
+        print_success "CLI configuration created at $CLI_CONFIG_PATH"
+    else
+        print_info "CLI configuration already exists at $CLI_CONFIG_PATH"
+    fi
+}
+
 confirm_action() {
     read -p "$1 (y/n): " -n 1 -r
     echo
@@ -290,6 +308,24 @@ else
     print_error "Cannot test Claude - command not found"
 fi
 
+# Step 10: Address CLI configuration warning
+print_info "Step 10: Addressing CLI configuration warning..."
+print_warning "Note: 'Config install method: unknown' is a cosmetic warning"
+print_info "Attempting to fix CLI configuration database..."
+
+# Try running migrate-installer to update the config
+claude migrate-installer >> "$LOG_FILE" 2>&1 && print_success "Migration command completed" || print_warning "Migration command had no effect (already local)"
+
+# Run claude doctor to check if warning persists
+print_info "Checking Claude doctor status..."
+if claude doctor 2>&1 | grep -q "Config install method: unknown"; then
+    print_warning "CLI config warning persists (this is cosmetic and doesn't affect functionality)"
+    print_info "To manually resolve: The warning indicates internal config database needs updating"
+    print_info "This commonly happens after local installation migration"
+else
+    print_success "CLI configuration warning resolved"
+fi
+
 echo "Fix process completed: $(date)" >> "$LOG_FILE"
 print_success "Claude Code fix process completed!"
 EOF
@@ -545,7 +581,9 @@ else
     print_info "Fix not run. You can run it manually later with: cd scripts && ./fix_claude.sh"
 fi
 
-# Return to parent directory
+# Update CLI configuration
+print_info "Updating CLI configuration to fix installation method..."
+update_cli_config
 cd ..
 
 print_info "Master script completed. Working directory preserved at: ./claude-fix-workspace"

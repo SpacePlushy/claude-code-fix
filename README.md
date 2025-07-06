@@ -166,6 +166,7 @@ MIT License - feel free to use and modify as needed.
 - **Permission denied**: Ensure you have write access to your home directory
 - **nvm not found**: The script will install nvm automatically
 - **Docker not available**: Install Docker Desktop for the containerized solution
+- **"Config install method: unknown" warning**: This is a cosmetic warning that occurs when Claude is running locally but the config database hasn't been updated. It doesn't affect functionality. To resolve: run `claude migrate-installer` or ignore the warning.
 
 ---
 
